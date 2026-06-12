@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Обучение командам сервера | Админ-панель</title>
+    <title>Обучение командам сервера | Полная админ-панель</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -51,12 +51,12 @@
     <div id="commandsContainer" class="commands-list">⏳ Загрузка...</div>
 
     <div id="adminPanel" class="admin-panel" style="display: none;">
-        <h3>🛠️ Редактор команд</h3>
+        <h3>🛠️ Редактор команд (работает прямо здесь)</h3>
         <input type="text" id="newCmdName" placeholder="/sell hand">
         <textarea id="newCmdDesc" rows="2" placeholder="Продать предмет из руки"></textarea>
-        <button id="addBtn" class="btn-success">➕ Добавить и сохранить на GitHub</button>
+        <button id="addBtn" class="btn-success">➕ Добавить команду</button>
         
-        <div style="margin: 15px 0 10px;">📋 Существующие команды:</div>
+        <div style="margin: 15px 0 10px;">📋 Существующие команды (нажми ✏️ или 🗑️):</div>
         <div id="adminList"></div>
         
         <div id="saveStatus" class="status"></div>
@@ -73,19 +73,15 @@
 </div>
 
 <script>
-    // ========== НАСТРОЙКИ GITHUB (НЕ ТРОГАТЬ) ==========
     const REPO_OWNER = "altonorim";
     const REPO_NAME = "lionworldtutorial";
     const FILE_PATH = "commands.json";
     const GITHUB_RAW_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
-    // ТОКЕН (работает, менять не надо)
     const GITHUB_TOKEN = "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";
-    // ================================================
 
     let commandsDatabase = [];
     let isAdminMode = false;
 
-    // Получение SHA файла
     async function getCurrentFileSHA() {
         try {
             const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
@@ -100,7 +96,6 @@
         } catch(e) { return null; }
     }
 
-    // Сохранение на GitHub
     async function saveToGitHub() {
         const data = { commands: commandsDatabase };
         const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
@@ -116,9 +111,9 @@
                 body: JSON.stringify(body)
             });
             if (response.ok) {
-                document.getElementById("saveStatus").innerHTML = "✅ Сохранено на GitHub!";
+                document.getElementById("saveStatus").innerHTML = "✅ Сохранено на GitHub! Обнови страницу через 1 минуту, чтобы увидеть изменения.";
                 document.getElementById("saveStatus").className = "status status-ok";
-                setTimeout(() => { document.getElementById("saveStatus").innerHTML = ""; }, 3000);
+                setTimeout(() => { document.getElementById("saveStatus").innerHTML = ""; }, 4000);
                 return true;
             } else {
                 throw new Error("Ошибка сохранения");
@@ -130,7 +125,6 @@
         }
     }
 
-    // Загрузка с GitHub
     async function loadCommands() {
         try {
             const response = await fetch(GITHUB_RAW_URL + "?t=" + Date.now());
@@ -206,7 +200,7 @@
     async function addCommand() {
         const name = document.getElementById('newCmdName').value.trim();
         const desc = document.getElementById('newCmdDesc').value.trim();
-        if (!name) return alert('Введите команду');
+        if (!name) return alert('Введите команду (например: /spawn)');
         commandsDatabase.push({
             id: Date.now() + '_' + Math.random(),
             name: name.startsWith('/') ? name : '/' + name,
@@ -215,6 +209,7 @@
         await saveAndSync();
         document.getElementById('newCmdName').value = '';
         document.getElementById('newCmdDesc').value = '';
+        alert('✅ Команда добавлена и сохранена на GitHub! Через 1 минуту она появится у всех игроков.');
     }
 
     function enterAdmin() {
