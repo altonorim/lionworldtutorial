@@ -2,343 +2,105 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Обучение командам сервера | Редактор JSON</title>
+    <title>Обучение командам сервера</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: linear-gradient(135deg, #0a0f1e 0%, #0c1222 100%);
-            font-family: 'Segoe UI', 'Poppins', system-ui, sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             padding: 2rem 1.5rem;
             min-height: 100vh;
             color: #eef2ff;
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Header */
-        .header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
         .header h1 {
-            font-size: 2.2rem;
+            font-size: 2.3rem;
             background: linear-gradient(135deg, #c084fc, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            letter-spacing: -0.5px;
         }
-
-        .badge {
-            background: #1e293b;
-            display: inline-block;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            border: 1px solid #334155;
-            margin-top: 8px;
-        }
-
-        /* Две колонки */
-        .dashboard {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-        }
-
-        .player-view {
-            flex: 2;
-            min-width: 280px;
-            background: rgba(15, 23, 42, 0.55);
-            backdrop-filter: blur(8px);
-            border-radius: 1.8rem;
-            padding: 1.5rem;
-            border: 1px solid rgba(71, 85, 105, 0.4);
-        }
-
-        .admin-panel {
-            flex: 1.3;
-            min-width: 300px;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            border-radius: 1.8rem;
-            padding: 1.5rem;
-            border: 1px solid #2d3a5e;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            border-left: 4px solid #3b82f6;
-            padding-left: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .commands-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.9rem;
-            margin-top: 0.5rem;
-        }
-
-        .command-card {
-            background: #0f172ae0;
-            border-radius: 1.2rem;
-            padding: 0.9rem 1.2rem;
-            border: 1px solid #2d3a5e;
-            transition: 0.1s ease;
-        }
-
-        .command-name {
-            font-family: 'Fira Code', 'Cascadia Code', monospace;
-            background: #00000066;
-            padding: 0.2rem 0.8rem;
-            border-radius: 30px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #bbf0ff;
-            display: inline-block;
-            margin-bottom: 6px;
-        }
-
-        .command-desc {
-            color: #cbd5e6;
-            font-size: 0.9rem;
-            word-break: break-word;
-        }
-
-        /* Формы */
-        .edit-label {
-            font-weight: 600;
-            margin: 0.8rem 0 0.3rem 0;
-            color: #cbd5e6;
-            font-size: 0.85rem;
-        }
-
-        input, textarea {
-            width: 100%;
-            background: #0a0f1f;
-            border: 1px solid #334155;
-            border-radius: 1rem;
-            padding: 0.7rem 1rem;
-            color: white;
-            font-family: monospace;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px #3b82f640;
-        }
-
-        button {
-            background: #3b82f6;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 2rem;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.85rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 6px;
-        }
-
-        button:hover {
-            background: #2563eb;
-            transform: scale(0.97);
-        }
-
-        .btn-danger {
-            background: #ef4444;
-        }
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-        .btn-success {
-            background: #10b981;
-        }
-        .btn-success:hover {
-            background: #059669;
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #5b6e8c;
-        }
-
-        .editor-item {
-            background: #111827;
-            margin-bottom: 0.7rem;
-            border-radius: 1rem;
-            padding: 0.7rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .editor-cmd {
-            font-family: monospace;
-            font-weight: bold;
-            background: #00000055;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-        }
-
-        .save-zone {
-            background: #0f172a;
-            padding: 0.9rem;
-            border-radius: 1.2rem;
-            margin: 1rem 0 0.5rem 0;
-            text-align: center;
-            border: 1px dashed #3b82f6;
-        }
-
-        .warning-note {
-            font-size: 0.7rem;
-            background: #00000066;
-            border-radius: 20px;
-            padding: 0.3rem 0.8rem;
-            display: inline-block;
-            margin-top: 1rem;
-            color: #94a3b8;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 2rem;
-            font-size: 0.7rem;
-            color: #5b6e8c;
-        }
+        .badge { background: #1e293b; display: inline-block; padding: 0.3rem 1rem; border-radius: 40px; font-size: 0.85rem; }
+        .commands-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+        .command-card { background: rgba(15, 23, 42, 0.7); border-radius: 1.2rem; padding: 1rem 1.5rem; border: 1px solid #2d3a5e; }
+        .command-name { font-family: monospace; background: #00000066; display: inline-block; padding: 0.2rem 0.8rem; border-radius: 30px; font-size: 1.2rem; font-weight: bold; color: #bbf0ff; margin-bottom: 0.5rem; }
+        .command-desc { color: #cbd5e6; }
+        .admin-panel { margin-top: 2rem; background: rgba(0, 0, 0, 0.5); border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #3b82f6; }
+        input, textarea { width: 100%; background: #0a0f1f; border: 1px solid #334155; border-radius: 1rem; padding: 0.7rem; color: white; margin-bottom: 0.7rem; }
+        button { background: #3b82f6; border: none; padding: 0.5rem 1rem; border-radius: 2rem; color: white; cursor: pointer; }
+        .btn-danger { background: #ef4444; }
+        .editor-item { background: #111827; margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+        .footer { text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #5b6e8c; }
     </style>
 </head>
 <body>
 <div class="container">
     <div class="header">
         <h1>📘 Обучение командам сервера</h1>
-        <div class="badge" id="roleBadge">🎮 Режим: игрок (только просмотр)</div>
-        <p style="margin-top: 8px; opacity: 0.8;">/spawn, /shop, /sell, /hand — изучай и применяй</p>
+        <div class="badge" id="roleBadge">🔐 Режим: просмотр</div>
     </div>
 
-    <div class="dashboard">
-        <!-- Левая часть: просмотр для всех -->
-        <div class="player-view">
-            <div class="section-title">
-                <span>📖</span> Доступные команды
-            </div>
-            <div id="commandsContainer" class="commands-list">
-                <div style="padding: 1rem;">Загрузка команд...</div>
-            </div>
-            <div class="warning-note">
-                💡 Команды загружены из внутреннего хранилища. Администратор может сохранить их в JSON-файл.
-            </div>
-        </div>
+    <div id="commandsContainer" class="commands-list">⏳ Загрузка команд с GitHub...</div>
 
-        <!-- Правая часть: админ-панель (скрыта) -->
-        <div id="adminPanel" class="admin-panel" style="display: none;">
-            <div class="section-title">
-                <span>🛠️</span> Панель администратора
-            </div>
-            <div class="edit-label">✏️ Новая команда</div>
-            <input type="text" id="newCmdName" placeholder="/spawn">
-            <textarea id="newCmdDesc" rows="2" placeholder="Описание команды..."></textarea>
-            <button id="addCommandBtn">➕ Добавить команду</button>
-
-            <div class="edit-label" style="margin-top: 1rem;">📋 Управление командами</div>
-            <div id="adminCommandsList" style="max-height: 320px; overflow-y: auto;">
-                <!-- динамический список -->
-            </div>
-
-            <div class="save-zone">
-                💾 <strong>Экспорт в JSON-файл</strong><br>
-                <button id="exportJsonBtn" class="btn-success" style="margin-top: 8px;">📁 Скачать commands.json</button>
-                <p style="font-size: 0.7rem; margin-top: 8px;">Файл будет содержать все текущие команды.<br>Вы сможете перенести его на хостинг или в репозиторий.</p>
-            </div>
-
-            <button id="logoutAdminBtn" class="btn-outline" style="width: 100%; margin-top: 12px;">🚪 Выйти из режима админа</button>
-        </div>
+    <div id="adminPanel" class="admin-panel" style="display: none;">
+        <h3>🛠️ Редактор команд</h3>
+        <input type="text" id="newCmdName" placeholder="/sell hand">
+        <textarea id="newCmdDesc" rows="2" placeholder="Продать предмет из руки"></textarea>
+        <button id="addBtn">➕ Добавить команду</button>
+        <div style="margin: 15px 0 10px;">📋 Существующие команды:</div>
+        <div id="adminList"></div>
+        <button id="logoutBtn" class="btn-danger">🚪 Выйти из админ-режима</button>
     </div>
 
-    <div style="display: flex; justify-content: center; margin-top: 1.8rem;">
-        <button id="enterAdminBtn" style="background: #4f46e5; padding: 0.6rem 2rem;">🔑 Войти как администратор</button>
+    <div style="text-align: center; margin-top: 1.5rem;">
+        <button id="enterAdminBtn">🔑 Войти как администратор</button>
     </div>
-    <footer>
-        ⚙️ Администратор может добавлять, удалять команды и сохранять их в commands.json.<br>
-        🧾 Игроки видят только список команд.
-    </footer>
+
+    <div class="footer">
+        ⚡ Команды загружаются с GitHub. Изменения видны всем игрокам сразу.
+    </div>
 </div>
 
 <script>
-    // ---------- ОСНОВНОЕ ХРАНИЛИЩЕ (localStorage) ----------
+    // GitHub репозиторий
+    const REPO_OWNER = "altonorim";
+    const REPO_NAME = "lionworldtutorial";
+    const FILE_PATH = "commands.json";
+    const GITHUB_RAW_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
+
     let commandsDatabase = [];
     let isAdminMode = false;
 
-    // Стартовый набор команд (если нет сохранённых)
-    const DEFAULT_COMMANDS = [
-        { id: "spawn1", name: "/spawn", description: "Мгновенно телепортироваться на главную точку возрождения сервера." },
-        { id: "shop2", name: "/shop", description: "Открыть внутриигровой магазин для покупки предметов и ресурсов." },
-        { id: "sell3", name: "/sell", description: "Продать выбранные предметы из инвентаря за игровую валюту." },
-        { id: "hand4", name: "/hand", description: "Продать предмет, который сейчас в руке (удобно для быстрой продажи)." },
-        { id: "kit5", name: "/kit starter", description: "Получить стартовый набор для новичков (еда, инструменты)." },
-        { id: "warp6", name: "/warp mines", description: "Телепорт на шахту с рудами." }
-    ];
-
-    // Загрузка из localStorage
-    function loadFromLocalStorage() {
-        const stored = localStorage.getItem("server_commands_tutorial");
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    commandsDatabase = parsed;
+    // Загрузка с GitHub
+    async function loadCommands() {
+        try {
+            const response = await fetch(GITHUB_RAW_URL + "?t=" + Date.now());
+            if (response.ok) {
+                const data = await response.json();
+                if (data.commands && Array.isArray(data.commands)) {
+                    commandsDatabase = data.commands;
                 } else {
-                    commandsDatabase = [...DEFAULT_COMMANDS];
+                    commandsDatabase = [];
                 }
-            } catch(e) {
-                commandsDatabase = [...DEFAULT_COMMANDS];
+            } else {
+                commandsDatabase = [];
             }
-        } else {
-            commandsDatabase = [...DEFAULT_COMMANDS];
+        } catch (e) {
+            console.error("Ошибка загрузки:", e);
+            commandsDatabase = [];
         }
-        // синхронизируем отображение
         renderPlayerView();
         if (isAdminMode) renderAdminList();
     }
 
-    function saveToLocalStorage() {
-        localStorage.setItem("server_commands_tutorial", JSON.stringify(commandsDatabase));
-    }
-
-    // --- Рендер для игрока ---
     function renderPlayerView() {
-        const container = document.getElementById("commandsContainer");
-        if (!container) return;
+        const container = document.getElementById('commandsContainer');
         if (!commandsDatabase.length) {
-            container.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #94a3b8;">📭 На сервере пока нет команд. Обратитесь к администратору.</div>`;
+            container.innerHTML = '<div style="padding:2rem; text-align:center;">📭 Команды пока не добавлены. Администратор может отредактировать commands.json на GitHub.</div>';
             return;
         }
-        let html = "";
+        let html = '';
         for (let cmd of commandsDatabase) {
             html += `
                 <div class="command-card">
@@ -350,141 +112,66 @@
         container.innerHTML = html;
     }
 
-    // --- Рендер для админа (список с кнопками)---
     function renderAdminList() {
-        const container = document.getElementById("adminCommandsList");
-        if (!container) return;
+        const container = document.getElementById('adminList');
         if (!commandsDatabase.length) {
-            container.innerHTML = `<div style="padding: 0.8rem; text-align:center;">Список команд пуст. Добавьте первую команду.</div>`;
+            container.innerHTML = '<div>Нет команд. Добавьте первую!</div>';
             return;
         }
-        let html = "";
-        commandsDatabase.forEach(cmd => {
+        let html = '';
+        for (let cmd of commandsDatabase) {
             html += `
-                <div class="editor-item" data-id="${cmd.id}">
-                    <div style="flex:1">
-                        <div class="editor-cmd">${escapeHtml(cmd.name)}</div>
-                        <div style="font-size: 0.75rem; color: #b9c7db; margin-top: 4px;">${escapeHtml(cmd.description)}</div>
-                    </div>
-                    <div style="display: flex; gap: 6px;">
-                        <button class="icon-btn" onclick="editCommandById('${cmd.id}')" style="background:#2563eb; padding: 4px 10px;">✏️</button>
-                        <button class="icon-btn" onclick="deleteCommandById('${cmd.id}')" style="background:#dc2626; padding: 4px 10px;">🗑️</button>
+                <div class="editor-item">
+                    <div><strong>${escapeHtml(cmd.name)}</strong><br><small>${escapeHtml(cmd.description)}</small></div>
+                    <div>
+                        <button onclick="alert('Редактирование доступно только в файле commands.json на GitHub')">✏️</button>
+                        <button onclick="alert('Удаление доступно только в файле commands.json на GitHub')" class="btn-danger">🗑️</button>
                     </div>
                 </div>
             `;
-        });
+        }
         container.innerHTML = html;
     }
 
-    // --- CRUD операции ---
-    function addNewCommand() {
-        const nameInput = document.getElementById("newCmdName");
-        const descInput = document.getElementById("newCmdDesc");
-        let rawName = nameInput.value.trim();
-        let rawDesc = descInput.value.trim();
-        if (!rawName) {
-            alert("Введите название команды (например /spawn)");
-            return;
-        }
-        if (!rawName.startsWith("/")) {
-            rawName = "/" + rawName;
-        }
-        if (!rawDesc) rawDesc = "Нет описания";
-        const newCmd = {
-            id: Date.now() + "_" + Math.random().toString(36).substr(2, 6),
-            name: rawName,
-            description: rawDesc
-        };
-        commandsDatabase.push(newCmd);
-        saveToLocalStorage();
-        renderPlayerView();
-        if (isAdminMode) renderAdminList();
-        nameInput.value = "";
-        descInput.value = "";
+    function addCommand() {
+        alert("✏️ Чтобы добавить команду, отредактируй файл commands.json на GitHub:\n\nhttps://github.com/altonorim/lionworldtutorial/blob/main/commands.json\n\nПросто добавь новую строчку в список и нажми Commit changes.");
     }
 
-    window.editCommandById = function(cmdId) {
-        const cmd = commandsDatabase.find(c => c.id === cmdId);
-        if (!cmd) return;
-        let newName = prompt("Редактировать команду (введите название с /)", cmd.name);
-        if (newName !== null && newName.trim() !== "") cmd.name = newName.trim();
-        let newDesc = prompt("Редактировать описание:", cmd.description);
-        if (newDesc !== null) cmd.description = newDesc.trim() || "—";
-        saveToLocalStorage();
-        renderPlayerView();
-        if (isAdminMode) renderAdminList();
-    };
-
-    window.deleteCommandById = function(cmdId) {
-        if (!confirm("Удалить команду навсегда? Игроки перестанут её видеть.")) return;
-        commandsDatabase = commandsDatabase.filter(c => c.id !== cmdId);
-        saveToLocalStorage();
-        renderPlayerView();
-        if (isAdminMode) renderAdminList();
-    };
-
-    // --- Экспорт в JSON-файл (сохраняет на компьютер) ---
-    function exportToJsonFile() {
-        const exportData = {
-            version: "1.0",
-            updated: new Date().toISOString(),
-            commands: commandsDatabase
-        };
-        const jsonStr = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([jsonStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "commands.json";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        alert("✅ Файл commands.json успешно скачан!\n\nТеперь вы можете поместить его в папку с проектом или выложить на GitHub, чтобы игроки использовали актуальные команды.");
-    }
-
-    // --- Админ-доступ ---
-    function requestAdminAccess() {
-        let pwd = prompt("🔐 Введите пароль администратора для редактирования команд:");
-        if (pwd === "admin2025") {
+    function enterAdmin() {
+        const pwd = prompt('Пароль администратора:');
+        if (pwd === 'admin2025') {
             isAdminMode = true;
-            document.getElementById("adminPanel").style.display = "block";
-            document.getElementById("enterAdminBtn").style.display = "none";
-            document.getElementById("roleBadge").innerHTML = "👑 Администратор (полный доступ)";
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('enterAdminBtn').style.display = 'none';
+            document.getElementById('roleBadge').innerHTML = '👑 Режим: администратор';
             renderAdminList();
         } else if (pwd !== null) {
-            alert("Неверный пароль! Только администратор может редактировать команды.");
+            alert('Неверный пароль');
         }
     }
 
     function logoutAdmin() {
         isAdminMode = false;
-        document.getElementById("adminPanel").style.display = "none";
-        document.getElementById("enterAdminBtn").style.display = "flex";
-        document.getElementById("roleBadge").innerHTML = "🎮 Режим: игрок (только просмотр)";
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('enterAdminBtn').style.display = 'inline-block';
+        document.getElementById('roleBadge').innerHTML = '🔐 Режим: просмотр';
     }
 
     function escapeHtml(str) {
-        if (!str) return "";
+        if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
-            if (m === "&") return "&amp;";
-            if (m === "<") return "&lt;";
-            if (m === ">") return "&gt;";
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
             return m;
         });
     }
 
-    // Инициализация и обработчики
-    document.addEventListener("DOMContentLoaded", () => {
-        loadFromLocalStorage();
-        const enterBtn = document.getElementById("enterAdminBtn");
-        if (enterBtn) enterBtn.onclick = requestAdminAccess;
-        const logoutBtn = document.getElementById("logoutAdminBtn");
-        if (logoutBtn) logoutBtn.onclick = logoutAdmin;
-        const addBtn = document.getElementById("addCommandBtn");
-        if (addBtn) addBtn.onclick = addNewCommand;
-        const exportBtn = document.getElementById("exportJsonBtn");
-        if (exportBtn) exportBtn.onclick = exportToJsonFile;
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCommands();
+        document.getElementById('enterAdminBtn').onclick = enterAdmin;
+        document.getElementById('logoutBtn').onclick = logoutAdmin;
+        document.getElementById('addBtn').onclick = addCommand;
     });
 </script>
 </body>
