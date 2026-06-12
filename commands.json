@@ -1,0 +1,19 @@
+{
+  "commands": [
+    {
+      "id": "cmd1",
+      "name": "/spawn",
+      "description": "Телепорт на точку спавна"
+    },
+    {
+      "id": "cmd2",
+      "name": "/shop",
+      "description": "Открыть магазин"
+    },
+    {
+      "id": "cmd3",
+      "name": "/sell hand",
+      "description": "Продать предмет, который сейчас в руке"
+    }
+  ]
+}
