@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    title>Обучение командам сервера</title>
+    <title>Обучение командам сервера | Админ-панель</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -28,11 +28,17 @@
         .command-name { font-family: monospace; background: #00000066; display: inline-block; padding: 0.2rem 0.8rem; border-radius: 30px; font-size: 1.2rem; font-weight: bold; color: #bbf0ff; margin-bottom: 0.5rem; }
         .command-desc { color: #cbd5e6; }
         .admin-panel { margin-top: 2rem; background: rgba(0, 0, 0, 0.5); border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #3b82f6; }
+        .admin-panel h3 { margin-bottom: 1rem; color: #60a5fa; }
         input, textarea { width: 100%; background: #0a0f1f; border: 1px solid #334155; border-radius: 1rem; padding: 0.7rem; color: white; margin-bottom: 0.7rem; }
-        button { background: #3b82f6; border: none; padding: 0.5rem 1rem; border-radius: 2rem; color: white; cursor: pointer; }
+        button { background: #3b82f6; border: none; padding: 0.5rem 1rem; border-radius: 2rem; color: white; cursor: pointer; margin-right: 0.5rem; margin-top: 0.3rem; }
         .btn-danger { background: #ef4444; }
-        .editor-item { background: #111827; margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+        .btn-success { background: #10b981; }
+        .editor-item { background: #111827; margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 0.8rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px; }
+        .status { font-size: 0.8rem; margin-top: 0.8rem; padding: 0.5rem; border-radius: 1rem; text-align: center; }
+        .status-ok { background: #10b98133; color: #34d399; }
+        .status-error { background: #ef444433; color: #f87171; }
         .footer { text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #5b6e8c; }
+        .icon-btn { padding: 4px 10px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -42,16 +48,19 @@
         <div class="badge" id="roleBadge">🔐 Режим: просмотр</div>
     </div>
 
-    <div id="commandsContainer" class="commands-list">⏳ Загрузка команд с GitHub...</div>
+    <div id="commandsContainer" class="commands-list">⏳ Загрузка...</div>
 
     <div id="adminPanel" class="admin-panel" style="display: none;">
         <h3>🛠️ Редактор команд</h3>
         <input type="text" id="newCmdName" placeholder="/sell hand">
         <textarea id="newCmdDesc" rows="2" placeholder="Продать предмет из руки"></textarea>
-        <button id="addBtn">➕ Добавить команду</button>
+        <button id="addBtn" class="btn-success">➕ Добавить и сохранить на GitHub</button>
+        
         <div style="margin: 15px 0 10px;">📋 Существующие команды:</div>
         <div id="adminList"></div>
-        <button id="logoutBtn" class="btn-danger">🚪 Выйти из админ-режима</button>
+        
+        <div id="saveStatus" class="status"></div>
+        <button id="logoutBtn" class="btn-danger" style="margin-top: 10px;">🚪 Выйти из админ-режима</button>
     </div>
 
     <div style="text-align: center; margin-top: 1.5rem;">
@@ -59,19 +68,67 @@
     </div>
 
     <div class="footer">
-        ⚡ Команды загружаются с GitHub. Изменения видны всем игрокам сразу.
+        ⚡ Изменения сохраняются на GitHub и видны всем игрокам сразу.
     </div>
 </div>
 
 <script>
-    // GitHub репозиторий
+    // ========== НАСТРОЙКИ GITHUB (НЕ ТРОГАТЬ) ==========
     const REPO_OWNER = "altonorim";
     const REPO_NAME = "lionworldtutorial";
     const FILE_PATH = "commands.json";
     const GITHUB_RAW_URL = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/main/${FILE_PATH}`;
+    // ТОКЕН (работает, менять не надо)
+    const GITHUB_TOKEN = "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";
+    // ================================================
 
     let commandsDatabase = [];
     let isAdminMode = false;
+
+    // Получение SHA файла
+    async function getCurrentFileSHA() {
+        try {
+            const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+            const response = await fetch(url, {
+                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                return data.sha;
+            }
+            return null;
+        } catch(e) { return null; }
+    }
+
+    // Сохранение на GitHub
+    async function saveToGitHub() {
+        const data = { commands: commandsDatabase };
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+        const sha = await getCurrentFileSHA();
+        const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${FILE_PATH}`;
+        const body = { message: "Обновление команд с сайта", content: content, branch: "main" };
+        if (sha) body.sha = sha;
+        
+        try {
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            if (response.ok) {
+                document.getElementById("saveStatus").innerHTML = "✅ Сохранено на GitHub!";
+                document.getElementById("saveStatus").className = "status status-ok";
+                setTimeout(() => { document.getElementById("saveStatus").innerHTML = ""; }, 3000);
+                return true;
+            } else {
+                throw new Error("Ошибка сохранения");
+            }
+        } catch(e) {
+            document.getElementById("saveStatus").innerHTML = "❌ Ошибка: " + e.message;
+            document.getElementById("saveStatus").className = "status status-error";
+            return false;
+        }
+    }
 
     // Загрузка с GitHub
     async function loadCommands() {
@@ -79,18 +136,19 @@
             const response = await fetch(GITHUB_RAW_URL + "?t=" + Date.now());
             if (response.ok) {
                 const data = await response.json();
-                if (data.commands && Array.isArray(data.commands)) {
-                    commandsDatabase = data.commands;
-                } else {
-                    commandsDatabase = [];
-                }
+                commandsDatabase = data.commands || [];
             } else {
                 commandsDatabase = [];
             }
-        } catch (e) {
-            console.error("Ошибка загрузки:", e);
+        } catch(e) {
             commandsDatabase = [];
         }
+        renderPlayerView();
+        if (isAdminMode) renderAdminList();
+    }
+
+    async function saveAndSync() {
+        await saveToGitHub();
         renderPlayerView();
         if (isAdminMode) renderAdminList();
     }
@@ -98,17 +156,12 @@
     function renderPlayerView() {
         const container = document.getElementById('commandsContainer');
         if (!commandsDatabase.length) {
-            container.innerHTML = '<div style="padding:2rem; text-align:center;">📭 Команды пока не добавлены. Администратор может отредактировать commands.json на GitHub.</div>';
+            container.innerHTML = '<div style="padding:2rem; text-align:center;">📭 Команды пока не добавлены</div>';
             return;
         }
         let html = '';
         for (let cmd of commandsDatabase) {
-            html += `
-                <div class="command-card">
-                    <div class="command-name">${escapeHtml(cmd.name)}</div>
-                    <div class="command-desc">${escapeHtml(cmd.description)}</div>
-                </div>
-            `;
+            html += `<div class="command-card"><div class="command-name">${escapeHtml(cmd.name)}</div><div class="command-desc">${escapeHtml(cmd.description)}</div></div>`;
         }
         container.innerHTML = html;
     }
@@ -125,8 +178,8 @@
                 <div class="editor-item">
                     <div><strong>${escapeHtml(cmd.name)}</strong><br><small>${escapeHtml(cmd.description)}</small></div>
                     <div>
-                        <button onclick="alert('Редактирование доступно только в файле commands.json на GitHub')">✏️</button>
-                        <button onclick="alert('Удаление доступно только в файле commands.json на GitHub')" class="btn-danger">🗑️</button>
+                        <button onclick="editCmd('${cmd.id}')" class="icon-btn">✏️</button>
+                        <button onclick="deleteCmd('${cmd.id}')" class="icon-btn btn-danger">🗑️</button>
                     </div>
                 </div>
             `;
@@ -134,8 +187,34 @@
         container.innerHTML = html;
     }
 
-    function addCommand() {
-        alert("✏️ Чтобы добавить команду, отредактируй файл commands.json на GitHub:\n\nhttps://github.com/altonorim/lionworldtutorial/blob/main/commands.json\n\nПросто добавь новую строчку в список и нажми Commit changes.");
+    window.editCmd = async function(id) {
+        const cmd = commandsDatabase.find(c => c.id === id);
+        if (!cmd) return;
+        const newName = prompt('Название команды:', cmd.name);
+        if (newName && newName.trim()) cmd.name = newName.trim();
+        const newDesc = prompt('Описание:', cmd.description);
+        if (newDesc !== null) cmd.description = newDesc.trim() || '—';
+        await saveAndSync();
+    };
+
+    window.deleteCmd = async function(id) {
+        if (!confirm('Удалить команду?')) return;
+        commandsDatabase = commandsDatabase.filter(c => c.id !== id);
+        await saveAndSync();
+    };
+
+    async function addCommand() {
+        const name = document.getElementById('newCmdName').value.trim();
+        const desc = document.getElementById('newCmdDesc').value.trim();
+        if (!name) return alert('Введите команду');
+        commandsDatabase.push({
+            id: Date.now() + '_' + Math.random(),
+            name: name.startsWith('/') ? name : '/' + name,
+            description: desc || 'Нет описания'
+        });
+        await saveAndSync();
+        document.getElementById('newCmdName').value = '';
+        document.getElementById('newCmdDesc').value = '';
     }
 
     function enterAdmin() {
@@ -146,9 +225,7 @@
             document.getElementById('enterAdminBtn').style.display = 'none';
             document.getElementById('roleBadge').innerHTML = '👑 Режим: администратор';
             renderAdminList();
-        } else if (pwd !== null) {
-            alert('Неверный пароль');
-        }
+        } else if (pwd !== null) alert('Неверный пароль');
     }
 
     function logoutAdmin() {
@@ -160,12 +237,7 @@
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
