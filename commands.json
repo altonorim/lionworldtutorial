@@ -1,19 +1,9 @@
 {
   "commands": [
-    {
-      "id": "cmd1",
-      "name": "/spawn",
-      "description": "Телепорт на точку спавна"
-    },
-    {
-      "id": "cmd2",
-      "name": "/shop",
-      "description": "Открыть магазин"
-    },
-    {
-      "id": "cmd3",
-      "name": "/sell hand",
-      "description": "Продать предмет, который сейчас в руке"
-    }
+    {"id": "1", "name": "/spawn", "description": "Телепорт на спавн"},
+    {"id": "2", "name": "/shop", "description": "Открыть магазин"},
+    {"id": "3", "name": "/sell hand", "description": "Продать предмет из руки"},
+    {"id": "4", "name": "//wand", "description": "Выдаёт топор привата"},
+    {"id": "5", "name": "//warp vvp", "description": "Телепорт на арену VVP"}
   ]
 }

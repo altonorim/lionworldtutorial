@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Обучение командам сервера | Админ-панель</title>
+    <title>Обучение командам сервера</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -37,6 +37,8 @@
         .footer { text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #5b6e8c; }
         .status { font-size: 0.8rem; margin-top: 0.8rem; padding: 0.5rem; border-radius: 1rem; text-align: center; }
         .status-ok { background: #10b98133; color: #34d399; }
+        .status-error { background: #ef444433; color: #f87171; }
+        .loading { text-align: center; padding: 2rem; }
     </style>
 </head>
 <body>
@@ -46,16 +48,19 @@
         <div class="badge" id="roleBadge">🔐 Режим: просмотр</div>
     </div>
 
-    <div id="commandsContainer" class="commands-list">⏳ Загрузка...</div>
+    <div id="commandsContainer" class="commands-list">
+        <div class="loading">⏳ Загрузка команд...</div>
+    </div>
 
     <div id="adminPanel" class="admin-panel" style="display: none;">
         <h3>🛠️ Редактор команд</h3>
-        <input type="text" id="newCmdName" placeholder="//wand">
-        <textarea id="newCmdDesc" rows="2" placeholder="Выдаёт топор привата"></textarea>
+        <input type="text" id="newCmdName" placeholder="//warp vvp">
+        <textarea id="newCmdDesc" rows="2" placeholder="Телепорт на арену"></textarea>
         <button id="addBtn" class="btn-success">➕ Добавить команду</button>
         <div style="margin: 15px 0 10px;">📋 Существующие команды:</div>
         <div id="adminList"></div>
-        <button id="logoutBtn" class="btn-danger">🚪 Выйти из админ-режима</button>
+        <div id="saveStatus" class="status"></div>
+        <button id="logoutBtn" class="btn-danger">🚪 Выйти</button>
     </div>
 
     <div style="text-align: center; margin-top: 1.5rem;">
@@ -63,141 +68,190 @@
     </div>
 
     <div class="footer">
-        💾 Команды сохраняются в браузере.
+        💾 Команды общие для всех. Изменения сохраняются автоматически.
     </div>
 </div>
 
 <script>
-    let commandsDatabase = [];
-    let isAdminMode = false;
+    // ========== НАСТРОЙКА (ОДИН РАЗ) ==========
+    // ВСТАВЬ СВОЙ GIST ID (то, что получил на gist.github.com)
+    const GIST_ID = "ЗАМЕНИ_НА_ТВОЙ_GIST_ID";
+    // ==========================================
+    
+    // GitHub API для работы с Gist
+    const GIST_API_URL = `https://api.github.com/gists/${GIST_ID}`;
+    
+    let commands = [];
+    let isAdmin = false;
+    let currentGistSha = null;
 
+    // Начальные команды
     const defaultCommands = [
         { id: "1", name: "/spawn", description: "Телепорт на спавн" },
         { id: "2", name: "/shop", description: "Открыть магазин" },
         { id: "3", name: "/sell hand", description: "Продать предмет из руки" },
-        { id: "4", name: "//wand", description: "Выдаёт топор привата" }
+        { id: "4", name: "//wand", description: "Выдаёт топор привата" },
+        { id: "5", name: "//warp vvp", description: "Телепорт на арену VVP" }
     ];
 
-    function loadFromLocal() {
-        const saved = localStorage.getItem("serverCommands");
-        if (saved) {
-            try {
-                commandsDatabase = JSON.parse(saved);
-            } catch(e) { commandsDatabase = [...defaultCommands]; }
-        } else {
-            commandsDatabase = [...defaultCommands];
+    // Загрузка с GitHub Gist
+    async function loadFromGist() {
+        try {
+            const response = await fetch(GIST_API_URL);
+            if (!response.ok) throw new Error("Gist не найден");
+            const gist = await response.json();
+            currentGistSha = gist.updated_at;
+            
+            // Получаем содержимое commands.json
+            const content = gist.files["commands.json"]?.content;
+            if (content) {
+                const data = JSON.parse(content);
+                if (data.commands && data.commands.length > 0) {
+                    commands = data.commands;
+                } else {
+                    commands = [...defaultCommands];
+                    await saveToGist();
+                }
+            } else {
+                commands = [...defaultCommands];
+                await saveToGist();
+            }
+        } catch(e) {
+            commands = [...defaultCommands];
         }
-        renderPlayerView();
+        render();
     }
 
-    function saveToLocal() {
-        localStorage.setItem("serverCommands", JSON.stringify(commandsDatabase));
-        const statusDiv = document.getElementById("saveStatus");
-        if (statusDiv) {
-            statusDiv.innerHTML = "✅ Сохранено!";
-            statusDiv.className = "status status-ok";
-            setTimeout(() => { statusDiv.innerHTML = ""; }, 2000);
+    // Сохранение на GitHub Gist
+    async function saveToGist() {
+        try {
+            // Получаем текущий gist чтобы узнать sha
+            const getResponse = await fetch(GIST_API_URL);
+            const gist = await getResponse.json();
+            const sha = gist.updated_at;
+            
+            const content = JSON.stringify({ commands }, null, 2);
+            const updateResponse = await fetch(GIST_API_URL, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    files: {
+                        "commands.json": { content: content }
+                    }
+                })
+            });
+            if (!updateResponse.ok) throw new Error("Ошибка сохранения");
+            if (isAdmin) showStatus("✅ Сохранено на GitHub! Все игроки увидят изменения через 1 минуту.", "ok");
+        } catch(e) {
+            if (isAdmin) showStatus("❌ Ошибка сохранения. Проверь Gist ID.", "error");
         }
     }
 
-    function renderPlayerView() {
-        const container = document.getElementById('commandsContainer');
-        if (!commandsDatabase.length) {
-            container.innerHTML = '<div style="padding:2rem; text-align:center;">📭 Нет команд</div>';
+    async function saveAndSync() {
+        await saveToGist();
+        render();
+        if (isAdmin) renderAdmin();
+    }
+
+    function showStatus(msg, type) {
+        const el = document.getElementById("saveStatus");
+        if (!el) return;
+        el.innerHTML = msg;
+        el.className = `status status-${type}`;
+        setTimeout(() => el.innerHTML = "", 3000);
+    }
+
+    function render() {
+        const container = document.getElementById("commandsContainer");
+        if (!commands.length) {
+            container.innerHTML = '<div class="loading">📭 Команды пока не добавлены</div>';
             return;
         }
-        let html = '';
-        for (let cmd of commandsDatabase) {
-            html += `<div class="command-card"><div class="command-name">${escapeHtml(cmd.name)}</div><div class="command-desc">${escapeHtml(cmd.description)}</div></div>`;
-        }
-        container.innerHTML = html;
+        container.innerHTML = commands.map(c => `
+            <div class="command-card">
+                <div class="command-name">${escape(c.name)}</div>
+                <div class="command-desc">${escape(c.description)}</div>
+            </div>
+        `).join("");
+        if (isAdmin) renderAdmin();
     }
 
-    function renderAdminList() {
-        const container = document.getElementById('adminList');
-        if (!commandsDatabase.length) {
-            container.innerHTML = '<div>Нет команд. Добавьте первую!</div>';
+    function renderAdmin() {
+        const container = document.getElementById("adminList");
+        if (!commands.length) {
+            container.innerHTML = "<div>Нет команд. Добавьте первую!</div>";
             return;
         }
-        let html = '';
-        for (let cmd of commandsDatabase) {
-            html += `
-                <div class="editor-item">
-                    <div><strong>${escapeHtml(cmd.name)}</strong><br><small>${escapeHtml(cmd.description)}</small></div>
-                    <div>
-                        <button onclick="editCmd('${cmd.id}')">✏️</button>
-                        <button onclick="deleteCmd('${cmd.id}')" class="btn-danger">🗑️</button>
-                    </div>
+        container.innerHTML = commands.map(c => `
+            <div class="editor-item">
+                <div><strong>${escape(c.name)}</strong><br><small>${escape(c.description)}</small></div>
+                <div>
+                    <button onclick="edit('${c.id}')">✏️</button>
+                    <button onclick="del('${c.id}')" class="btn-danger">🗑️</button>
                 </div>
-            `;
-        }
-        container.innerHTML = html;
+            </div>
+        `).join("");
     }
 
-    window.editCmd = function(id) {
-        const cmd = commandsDatabase.find(c => c.id === id);
+    window.edit = async (id) => {
+        const cmd = commands.find(c => c.id === id);
         if (!cmd) return;
-        const newName = prompt('Название команды:', cmd.name);
-        if (newName && newName.trim()) cmd.name = newName.trim();
-        const newDesc = prompt('Описание:', cmd.description);
-        if (newDesc !== null) cmd.description = newDesc.trim() || '—';
-        saveToLocal();
-        renderPlayerView();
-        if (isAdminMode) renderAdminList();
+        const newName = prompt("Название команды:", cmd.name);
+        if (newName?.trim()) cmd.name = newName.trim();
+        const newDesc = prompt("Описание:", cmd.description);
+        if (newDesc !== null) cmd.description = newDesc.trim() || "—";
+        await saveAndSync();
     };
 
-    window.deleteCmd = function(id) {
-        if (!confirm('Удалить команду?')) return;
-        commandsDatabase = commandsDatabase.filter(c => c.id !== id);
-        saveToLocal();
-        renderPlayerView();
-        if (isAdminMode) renderAdminList();
+    window.del = async (id) => {
+        if (!confirm("Удалить команду?")) return;
+        commands = commands.filter(c => c.id !== id);
+        await saveAndSync();
     };
 
-    function addCommand() {
-        const name = document.getElementById('newCmdName').value.trim();
-        const desc = document.getElementById('newCmdDesc').value.trim();
-        if (!name) return alert('Введите команду');
-        commandsDatabase.push({
-            id: Date.now() + '_' + Math.random(),
+    async function add() {
+        const name = document.getElementById("newCmdName").value.trim();
+        const desc = document.getElementById("newCmdDesc").value.trim();
+        if (!name) return alert("Введите команду");
+        commands.push({
+            id: Date.now() + "_" + Math.random(),
             name: name,
-            description: desc || 'Нет описания'
+            description: desc || "Нет описания"
         });
-        saveToLocal();
-        renderPlayerView();
-        if (isAdminMode) renderAdminList();
-        document.getElementById('newCmdName').value = '';
-        document.getElementById('newCmdDesc').value = '';
+        await saveAndSync();
+        document.getElementById("newCmdName").value = "";
+        document.getElementById("newCmdDesc").value = "";
+        alert("✅ Команда добавлена и сохранена! Через 1 минуту появится у всех.");
     }
 
     function enterAdmin() {
-        const pwd = prompt('Пароль администратора:');
-        if (pwd === 'admin2025') {
-            isAdminMode = true;
-            document.getElementById('adminPanel').style.display = 'block';
-            document.getElementById('enterAdminBtn').style.display = 'none';
-            document.getElementById('roleBadge').innerHTML = '👑 Администратор';
-            renderAdminList();
-        } else if (pwd !== null) alert('Неверный пароль');
+        const pwd = prompt("Пароль администратора:");
+        if (pwd === "admin2025") {
+            isAdmin = true;
+            document.getElementById("adminPanel").style.display = "block";
+            document.getElementById("enterAdminBtn").style.display = "none";
+            document.getElementById("roleBadge").innerHTML = "👑 Администратор";
+            renderAdmin();
+        } else if (pwd) alert("Неверный пароль");
     }
 
-    function logoutAdmin() {
-        isAdminMode = false;
-        document.getElementById('adminPanel').style.display = 'none';
-        document.getElementById('enterAdminBtn').style.display = 'inline-block';
-        document.getElementById('roleBadge').innerHTML = '🔐 Режим: просмотр';
+    function logout() {
+        isAdmin = false;
+        document.getElementById("adminPanel").style.display = "none";
+        document.getElementById("enterAdminBtn").style.display = "inline-block";
+        document.getElementById("roleBadge").innerHTML = "🔐 Режим: просмотр";
     }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+    function escape(str) {
+        if (!str) return "";
+        return str.replace(/[&<>]/g, m => m === "&" ? "&amp;" : m === "<" ? "&lt;" : "&gt;");
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        loadFromLocal();
-        document.getElementById('enterAdminBtn').onclick = enterAdmin;
-        document.getElementById('logoutBtn').onclick = logoutAdmin;
-        document.getElementById('addBtn').onclick = addCommand;
+    document.addEventListener("DOMContentLoaded", () => {
+        loadFromGist();
+        document.getElementById("enterAdminBtn").onclick = enterAdmin;
+        document.getElementById("logoutBtn").onclick = logout;
+        document.getElementById("addBtn").onclick = add;
     });
 </script>
 </body>
