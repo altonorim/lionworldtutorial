@@ -2,431 +2,128 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Обучение командам сервера | Админ-панель</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обучение командам сервера</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            user-select: none; /* базово запретим выделение, но для редактирования разрешим в инпутах */
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: linear-gradient(135deg, #0a0f1e 0%, #0c1222 100%);
-            font-family: 'Segoe UI', 'Poppins', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
+            font-family: 'Segoe UI', system-ui, sans-serif;
             padding: 2rem 1.5rem;
             min-height: 100vh;
             color: #eef2ff;
         }
-
-        /* контейнер */
-        .container {
-            max-width: 1300px;
-            margin: 0 auto;
-        }
-
-        /* header */
-        .header {
-            text-align: center;
-            margin-bottom: 2.5rem;
-        }
-
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 2rem; }
         .header h1 {
             font-size: 2.3rem;
             background: linear-gradient(135deg, #c084fc, #60a5fa);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
-            letter-spacing: -0.5px;
-            margin-bottom: 0.5rem;
         }
-
-        .badge {
-            background: #1e293b;
-            display: inline-block;
-            padding: 0.3rem 1rem;
-            border-radius: 40px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            backdrop-filter: blur(4px);
-            border: 1px solid #334155;
-        }
-
-        .badge span {
-            color: #facc15;
-            font-weight: bold;
-        }
-
-        /* две колонки */
-        .dashboard {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 2rem;
-        }
-
-        /* панель просмотра (для игроков) */
-        .player-view {
-            flex: 2;
-            min-width: 280px;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(8px);
-            border-radius: 2rem;
-            padding: 1.5rem;
-            border: 1px solid rgba(71, 85, 105, 0.4);
-            box-shadow: 0 20px 35px -12px rgba(0, 0, 0, 0.4);
-        }
-
-        /* панель администратора (редактор) */
-        .admin-panel {
-            flex: 1.2;
-            min-width: 300px;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(8px);
-            border-radius: 1.8rem;
-            padding: 1.5rem;
-            border: 1px solid #2d3a5e;
-            box-shadow: 0 20px 30px -10px black;
-        }
-
-        .section-title {
-            font-size: 1.6rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-left: 4px solid #3b82f6;
-            padding-left: 1rem;
-        }
-
-        .section-title i {
-            font-size: 1.4rem;
-        }
-
-        /* список команд для игрока */
-        .commands-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.9rem;
-            margin-top: 1rem;
-        }
-
-        .command-card {
-            background: #0f172ae0;
-            border-radius: 1.2rem;
-            padding: 0.9rem 1.2rem;
-            border: 1px solid #2d3a5e;
-            transition: all 0.2s ease;
-            backdrop-filter: blur(4px);
-        }
-
-        .command-header {
-            display: flex;
-            align-items: baseline;
-            flex-wrap: wrap;
-            gap: 0.6rem;
-            margin-bottom: 0.4rem;
-        }
-
-        .command-name {
-            font-family: 'Fira Code', 'Cascadia Code', monospace;
-            background: #00000055;
-            padding: 0.2rem 0.7rem;
-            border-radius: 30px;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #bbf0ff;
-            letter-spacing: 0.3px;
-        }
-
-        .command-desc {
-            color: #cbd5e6;
-            font-size: 0.9rem;
-            word-break: break-word;
-            padding-left: 0.3rem;
-        }
-
-        .empty-msg {
-            text-align: center;
-            padding: 2rem;
-            color: #94a3b8;
-            font-style: italic;
-        }
-
-        /* форма редактирования */
-        .edit-area {
-            margin-bottom: 1.8rem;
-        }
-
-        .edit-label {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #b9c7db;
-        }
-
-        input, textarea {
-            width: 100%;
-            background: #0a0f1f;
-            border: 1px solid #334155;
-            border-radius: 1rem;
-            padding: 0.75rem 1rem;
-            color: white;
-            font-family: monospace;
-            font-size: 0.9rem;
-            transition: 0.2s;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px #3b82f640;
-        }
-
-        button {
-            background: #3b82f6;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 2rem;
-            font-weight: 600;
-            color: white;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        button:hover {
-            background: #2563eb;
-            transform: scale(0.97);
-        }
-
-        .btn-danger {
-            background: #ef4444;
-        }
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-        .btn-outline {
-            background: transparent;
-            border: 1px solid #5b6e8c;
-        }
-        .btn-outline:hover {
-            background: #1e293b;
-        }
-
-        .command-list-editor {
-            margin-top: 1rem;
-            max-height: 380px;
-            overflow-y: auto;
-            padding-right: 5px;
-        }
-
-        .editor-item {
-            background: #111827;
-            margin-bottom: 0.7rem;
-            border-radius: 1rem;
-            padding: 0.6rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .editor-cmd {
-            font-family: monospace;
-            font-weight: bold;
-            background: #00000055;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-        }
-
-        .editor-desc {
-            flex: 1;
-            font-size: 0.8rem;
-            color: #b9c7db;
-            word-break: break-word;
-            min-width: 120px;
-        }
-
-        .edit-buttons {
-            display: flex;
-            gap: 6px;
-        }
-
-        .icon-btn {
-            background: #2d3a5e;
-            padding: 0.3rem 0.7rem;
-            font-size: 0.7rem;
-            border-radius: 30px;
-        }
-
-        .add-section {
-            margin-top: 1rem;
-            border-top: 1px dashed #2d3a5e;
-            padding-top: 1.2rem;
-        }
-
-        .warning-note {
-            font-size: 0.7rem;
-            background: #00000066;
-            border-radius: 20px;
-            padding: 0.3rem 0.8rem;
-            display: inline-block;
-            margin-top: 1rem;
-            color: #94a3b8;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 3rem;
-            font-size: 0.75rem;
-            color: #5b6e8c;
-        }
-
-        /* скролл */
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #3b82f6;
-            border-radius: 10px;
-        }
+        .badge { background: #1e293b; display: inline-block; padding: 0.3rem 1rem; border-radius: 40px; font-size: 0.85rem; }
+        .commands-list { display: flex; flex-direction: column; gap: 1rem; margin-top: 1.5rem; }
+        .command-card { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); border-radius: 1.2rem; padding: 1rem 1.5rem; border: 1px solid #2d3a5e; }
+        .command-name { font-family: monospace; background: #00000066; display: inline-block; padding: 0.2rem 0.8rem; border-radius: 30px; font-size: 1.2rem; font-weight: bold; color: #bbf0ff; margin-bottom: 0.5rem; }
+        .command-desc { color: #cbd5e6; }
+        .admin-panel { margin-top: 2rem; background: rgba(0, 0, 0, 0.5); border-radius: 1.5rem; padding: 1.5rem; border: 1px solid #3b82f6; }
+        .admin-panel h3 { margin-bottom: 1rem; color: #60a5fa; }
+        input, textarea { width: 100%; background: #0a0f1f; border: 1px solid #334155; border-radius: 1rem; padding: 0.7rem; color: white; margin-bottom: 0.7rem; }
+        button { background: #3b82f6; border: none; padding: 0.5rem 1rem; border-radius: 2rem; color: white; cursor: pointer; margin-right: 0.5rem; }
+        .btn-danger { background: #ef4444; }
+        .btn-success { background: #10b981; }
+        .editor-item { background: #111827; margin-bottom: 0.5rem; padding: 0.5rem; border-radius: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+        .footer { text-align: center; margin-top: 2rem; font-size: 0.7rem; color: #5b6e8c; }
+        .save-note { background: #1e293b; padding: 0.5rem; border-radius: 0.8rem; margin-top: 1rem; text-align: center; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div class="header">
         <h1>📘 Обучение командам сервера</h1>
-        <div class="badge">🔐 Режим: <span id="roleDisplay">Игрок (только просмотр)</span></div>
-        <p style="margin-top: 0.6rem; opacity: 0.8;">/spawn, /shop, /sell, /hand и другие — изучай и применяй!</p>
+        <div class="badge" id="roleBadge">🔐 Режим: просмотр</div>
     </div>
 
-    <div class="dashboard">
-        <!-- Левая колонка: режим игрока (только чтение) -->
-        <div class="player-view">
-            <div class="section-title">
-                <span>📖</span> Доступные команды
-            </div>
-            <div id="commandsContainer" class="commands-list">
-                <!-- динамический список команд для игроков -->
-                <div class="empty-msg">Загрузка команд...</div>
-            </div>
-            <div class="warning-note">
-                💡 Команды обновляются администратором. Вы не можете их изменять.
-            </div>
+    <div id="commandsContainer" class="commands-list">⏳ Загрузка...</div>
+
+    <div id="adminPanel" class="admin-panel" style="display: none;">
+        <h3>🛠️ Редактор команд (только для тебя)</h3>
+        <input type="text" id="newCmdName" placeholder="/newcommand">
+        <textarea id="newCmdDesc" rows="2" placeholder="Описание команды"></textarea>
+        <button id="addBtn">➕ Добавить</button>
+        <div style="margin: 15px 0 10px;">📋 Существующие команды:</div>
+        <div id="adminList"></div>
+        
+        <div class="save-note">
+            💾 <strong>Сохранить изменения в файл commands.json:</strong><br>
+            <button id="saveToFileBtn" class="btn-success" style="margin-top: 8px;">📁 Сохранить в commands.json</button>
+            <span style="font-size:0.7rem; display:block; margin-top:5px;">Файл будет создан/перезаписан в твоей папке "Загрузки"</span>
         </div>
-
-        <!-- Правая колонка: админ-редактор (виден только после входа) -->
-        <div class="admin-panel" id="adminPanel" style="display: none;">
-            <div class="section-title">
-                <span>🛠️</span> Редактор команд (Админ)
-            </div>
-            <div class="edit-area">
-                <div class="edit-label">✏️ Добавить новую команду</div>
-                <input type="text" id="newCmdName" placeholder="Например: /spawn или /heal" style="margin-bottom: 10px;">
-                <textarea id="newCmdDesc" rows="2" placeholder="Описание: Телепорт на точку спавна..."></textarea>
-                <button id="addCommandBtn" style="margin-top: 12px; width: 100%;">➕ Добавить команду</button>
-            </div>
-            
-            <div class="edit-label">📋 Существующие команды (нажмите редактировать)</div>
-            <div id="adminCommandsList" class="command-list-editor">
-                <!-- список для админа с кнопками -->
-            </div>
-            <div class="add-section">
-                <button id="toggleAdminModeBtn" class="btn-outline" style="width: 100%;">🚪 Выйти из режима администратора</button>
-            </div>
-            <div class="warning-note" style="margin-top: 12px;">
-                🔒 Только вы видите панель редактирования. Изменения сохраняются в localStorage браузера.
-            </div>
-        </div>
+        
+        <button id="logoutBtn" class="btn-danger" style="margin-top: 10px;">🚪 Выйти из админ-режима</button>
     </div>
 
-    <!-- Кнопка входа в админку (показывается, если админ-панель скрыта) -->
-    <div style="display: flex; justify-content: center; margin-top: 2rem;">
-        <button id="enterAdminBtn" style="background: #4f46e5; padding: 0.7rem 2rem;">🔑 Войти как администратор (редактировать)</button>
+    <div style="text-align: center; margin-top: 1.5rem;">
+        <button id="enterAdminBtn">🔑 Войти как администратор</button>
     </div>
-    <footer>
-        ⚡ Команды: /spawn, /shop, /sell , /hand и любые другие. Редактируй через админ-панель.
-    </footer>
+
+    <div class="footer">
+        💾 Команды сохраняются в JSON-файл. Ты создаёшь пустой файл один раз — код сам заполняет его данными.
+    </div>
 </div>
 
 <script>
-    // ---------- Начальные данные: стандартный набор команд ----------
-    // Ключевые команды: spawn, shop, sell, hand + несколько дополнительных для примера
-    let commandsDatabase = [
-        { id: "cmd1", name: "/spawn", description: "Мгновенно телепортироваться на главную точку возрождения сервера." },
-        { id: "cmd2", name: "/shop", description: "Открыть внутриигровой магазин для покупки предметов и ресурсов." },
-        { id: "cmd3", name: "/sell", description: "Продать выбранные предметы из инвентаря за игровую валюту." },
-        { id: "cmd4", name: "/hand", description: "Продать предмет, который сейчас в руке (удобно для быстрой продажи)." },
-        { id: "cmd5", name: "/kit starter", description: "Получить стартовый набор для новичков (еда, инструменты)." },
-        { id: "cmd6", name: "/warp mines", description: "Телепорт на шахту с рудами." }
+    let commandsDatabase = [];
+    let isAdminMode = false;
+
+    const defaultCommands = [
+        { id: "cmd1", name: "/spawn", description: "Телепорт на точку спавна" },
+        { id: "cmd2", name: "/shop", description: "Открыть магазин" },
+        { id: "cmd3", name: "/sell", description: "Продать предметы" },
+        { id: "cmd4", name: "/hand", description: "Продать предмет из руки" }
     ];
 
-    // Функция генерации короткого ID (для новых команд)
-    function generateId() {
-        return 'cmd_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
-    }
-
-    // Загрузка данных из localStorage (если есть)
-    function loadCommandsFromStorage() {
-        const stored = localStorage.getItem("serverCommandsList");
-        if (stored) {
+    function loadFromLocal() {
+        const saved = localStorage.getItem("serverCommands");
+        if (saved) {
             try {
-                const parsed = JSON.parse(stored);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    commandsDatabase = parsed;
-                } else {
-                    // если массив пустой но валидный - оставляем пустым, но лучше не сбрасывать дефолт?
-                    if(parsed && parsed.length === 0) commandsDatabase = [];
-                    else commandsDatabase = parsed;
-                }
-            } catch(e) { console.warn(e); }
+                commandsDatabase = JSON.parse(saved);
+            } catch(e) { commandsDatabase = [...defaultCommands]; }
         } else {
-            // при отсутствии сохранённых записей записываем дефолтные в localStorage
-            saveCommandsToStorage();
+            commandsDatabase = [...defaultCommands];
         }
-        // дополнительная проверка: если по какой-то причине команды пустые, но пользователь хочет что-то видеть, вернём минималку
-        if(!commandsDatabase || commandsDatabase.length === 0) {
-            commandsDatabase = [
-                { id: "default1", name: "/spawn", description: "Базовая команда спавна." },
-                { id: "default2", name: "/help", description: "Список доступных команд." }
-            ];
-            saveCommandsToStorage();
-        }
+        renderPlayerView();
     }
 
-    function saveCommandsToStorage() {
-        localStorage.setItem("serverCommandsList", JSON.stringify(commandsDatabase));
+    function saveToLocal() {
+        localStorage.setItem("serverCommands", JSON.stringify(commandsDatabase));
     }
 
-    // Рендер для ИГРОКА (только просмотр) - обновляем левую колонку
+    function downloadJSON() {
+        const data = { commands: commandsDatabase };
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "commands.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        alert("✅ commands.json сохранён в папке 'Загрузки'!\n\nПеремести его в нужное место (например, на GitHub или в папку с сайтом).");
+    }
+
     function renderPlayerView() {
-        const container = document.getElementById("commandsContainer");
-        if (!container) return;
+        const container = document.getElementById('commandsContainer');
         if (!commandsDatabase.length) {
-            container.innerHTML = `<div class="empty-msg">📭 На сервере пока нет команд. Обратитесь к администратору.</div>`;
+            container.innerHTML = '<div style="text-align:center; padding:2rem;">📭 Команды пока не добавлены</div>';
             return;
         }
         let html = '';
         for (let cmd of commandsDatabase) {
             html += `
                 <div class="command-card">
-                    <div class="command-header">
-                        <span class="command-name">${escapeHtml(cmd.name)}</span>
-                    </div>
+                    <div class="command-name">${escapeHtml(cmd.name)}</div>
                     <div class="command-desc">${escapeHtml(cmd.description)}</div>
                 </div>
             `;
@@ -434,33 +131,83 @@
         container.innerHTML = html;
     }
 
-    // Рендер для АДМИНИСТРАТОРА (список с редактированием/удалением)
-    function renderAdminListView() {
-        const adminContainer = document.getElementById("adminCommandsList");
-        if (!adminContainer) return;
+    function renderAdminList() {
+        const container = document.getElementById('adminList');
         if (!commandsDatabase.length) {
-            adminContainer.innerHTML = `<div style="padding: 1rem; text-align:center; color:#aaa;">Нет команд. Добавьте первую!</div>`;
+            container.innerHTML = '<div>Нет команд</div>';
             return;
         }
         let html = '';
-        commandsDatabase.forEach((cmd, idx) => {
+        for (let cmd of commandsDatabase) {
             html += `
-                <div class="editor-item" data-id="${cmd.id}">
-                    <div style="display: flex; flex-direction: column; gap: 5px; flex:1;">
-                        <div class="editor-cmd">${escapeHtml(cmd.name)}</div>
-                        <div class="editor-desc" id="descText_${cmd.id}">${escapeHtml(cmd.description)}</div>
-                    </div>
-                    <div class="edit-buttons">
-                        <button class="icon-btn" onclick="window.editCommand('${cmd.id}')">✏️ Изм.</button>
-                        <button class="icon-btn btn-danger" onclick="window.deleteCommand('${cmd.id}')">🗑️ Удал.</button>
+                <div class="editor-item">
+                    <div><strong>${escapeHtml(cmd.name)}</strong><br><small>${escapeHtml(cmd.description)}</small></div>
+                    <div>
+                        <button onclick="editCmd('${cmd.id}')">✏️</button>
+                        <button onclick="deleteCmd('${cmd.id}')" class="btn-danger">🗑️</button>
                     </div>
                 </div>
             `;
-        });
-        adminContainer.innerHTML = html;
+        }
+        container.innerHTML = html;
     }
 
-    // вспомогательная функция для экранирования HTML (безопасность)
+    window.editCmd = function(id) {
+        const cmd = commandsDatabase.find(c => c.id === id);
+        if (!cmd) return;
+        const newName = prompt('Название команды:', cmd.name);
+        if (newName && newName.trim()) cmd.name = newName.trim();
+        const newDesc = prompt('Описание:', cmd.description);
+        if (newDesc !== null) cmd.description = newDesc.trim() || '—';
+        saveToLocal();
+        renderPlayerView();
+        if (isAdminMode) renderAdminList();
+    };
+
+    window.deleteCmd = function(id) {
+        if (!confirm('Удалить команду?')) return;
+        commandsDatabase = commandsDatabase.filter(c => c.id !== id);
+        saveToLocal();
+        renderPlayerView();
+        if (isAdminMode) renderAdminList();
+    };
+
+    function addCommand() {
+        const name = document.getElementById('newCmdName').value.trim();
+        const desc = document.getElementById('newCmdDesc').value.trim();
+        if (!name) return alert('Введите команду');
+        commandsDatabase.push({
+            id: Date.now() + '_' + Math.random(),
+            name: name.startsWith('/') ? name : '/' + name,
+            description: desc || 'Нет описания'
+        });
+        saveToLocal();
+        renderPlayerView();
+        if (isAdminMode) renderAdminList();
+        document.getElementById('newCmdName').value = '';
+        document.getElementById('newCmdDesc').value = '';
+    }
+
+    function enterAdmin() {
+        const pwd = prompt('Пароль администратора:');
+        if (pwd === 'admin2025') {
+            isAdminMode = true;
+            document.getElementById('adminPanel').style.display = 'block';
+            document.getElementById('enterAdminBtn').style.display = 'none';
+            document.getElementById('roleBadge').innerHTML = '👑 Режим: администратор';
+            renderAdminList();
+        } else if (pwd !== null) {
+            alert('Неверный пароль');
+        }
+    }
+
+    function logoutAdmin() {
+        isAdminMode = false;
+        document.getElementById('adminPanel').style.display = 'none';
+        document.getElementById('enterAdminBtn').style.display = 'inline-block';
+        document.getElementById('roleBadge').innerHTML = '🔐 Режим: просмотр';
+    }
+
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
@@ -468,176 +215,16 @@
             if (m === '<') return '&lt;';
             if (m === '>') return '&gt;';
             return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
         });
     }
 
-    // Глобальные функции для редактирования (доступны из кнопок)
-    window.editCommand = function(cmdId) {
-        const command = commandsDatabase.find(c => c.id === cmdId);
-        if (!command) return;
-        const newName = prompt("Редактировать команду (введите название с /)", command.name);
-        if (newName !== null && newName.trim() !== "") {
-            command.name = newName.trim();
-        }
-        const newDesc = prompt("Редактировать описание команды:", command.description);
-        if (newDesc !== null) {
-            command.description = newDesc.trim() || "нет описания";
-        }
-        saveCommandsToStorage();
-        renderPlayerView();
-        renderAdminListView();
-    };
-
-    window.deleteCommand = function(cmdId) {
-        if (confirm("Удалить эту команду навсегда? Игроки перестанут её видеть.")) {
-            commandsDatabase = commandsDatabase.filter(c => c.id !== cmdId);
-            saveCommandsToStorage();
-            renderPlayerView();
-            renderAdminListView();
-        }
-    };
-
-    // Добавление новой команды через панель админа
-    function addNewCommand() {
-        const nameInput = document.getElementById("newCmdName");
-        const descInput = document.getElementById("newCmdDesc");
-        let rawName = nameInput.value.trim();
-        let rawDesc = descInput.value.trim();
-        if (!rawName) {
-            alert("Введите название команды, например /spawn или /sell");
-            return;
-        }
-        // если забыли слеш — добавим для удобства, но не принудительно (на сервере обычно с /)
-        if (!rawName.startsWith("/")) {
-            let confirmAdd = confirm("Команда обычно начинается со слеша (/). Добавить слеш автоматически?");
-            if (confirmAdd) rawName = "/" + rawName;
-        }
-        if (!rawDesc) rawDesc = "Нет описания (отредактируйте)";
-        const newCmd = {
-            id: generateId(),
-            name: rawName,
-            description: rawDesc
-        };
-        commandsDatabase.push(newCmd);
-        saveCommandsToStorage();
-        // очистить поля
-        nameInput.value = "";
-        descInput.value = "";
-        renderPlayerView();
-        renderAdminListView();
-    }
-
-    // Функция входа в админ-режим (имитация авторизации, т.к. по ТЗ игроки не могут редактировать,
-    // а админ может. В реальности можно добавить простой пароль, но по условию нужно чтобы я (хозяин) мог редактировать,
-    // а игроки нет -> достаточно скрыть интерфейс и показывать его только после "входа")
-    let isAdminMode = false;
-
-    function toggleAdminMode(show) {
-        const adminPanel = document.getElementById("adminPanel");
-        const enterBtn = document.getElementById("enterAdminBtn");
-        const roleSpan = document.getElementById("roleDisplay");
-        if (show) {
-            adminPanel.style.display = "block";
-            enterBtn.style.display = "none";
-            roleSpan.innerText = "👑 Администратор (полный доступ)";
-            isAdminMode = true;
-            // перерисовываем админ список
-            renderAdminListView();
-        } else {
-            adminPanel.style.display = "none";
-            enterBtn.style.display = "flex";
-            roleSpan.innerText = "Игрок (только просмотр)";
-            isAdminMode = false;
-        }
-    }
-
-    // проверка: возможно уже есть сессия админа? сохраним в sessionStorage для удобства
-    function checkStoredAdminSession() {
-        const adminSession = sessionStorage.getItem("admin_session_active");
-        if (adminSession === "true") {
-            toggleAdminMode(true);
-        } else {
-            toggleAdminMode(false);
-        }
-    }
-
-    // Вход администратора (без сложного пароля, но для защиты можно сделать пароль, но по ТЗ мне, как владельцу, редактировать,
-    // а игроки не могут => будет достаточно того, что панель скрыта и появляется только при клике.
-    // Тем не менее на чистом клиенте любой может открыть инструменты и включить панель, но для демо-обучения это допустимо,
-    // реальный сервер требует бэкенд. Добавим простенькое подтверждение для имитации, чтобы обычный игрок случайно не зашёл.
-    function requestAdminAccess() {
-        // Небольшой пароль для условной защиты (можно пустой, но для правдоподобности)
-        let pwd = prompt("🔐 Введите пароль администратора для редактирования команд:", "");
-        // Пароль по умолчанию: "admin2025" (можно изменить, для демонстрации просто показать)
-        // В реальном проекте проверка должна быть на сервере, здесь - имитация.
-        if (pwd === "admin2025") {
-            sessionStorage.setItem("admin_session_active", "true");
-            toggleAdminMode(true);
-            renderAdminListView();
-        } else if (pwd === null) {
-            // отмена
-        } else {
-            alert("Неверный пароль! Доступ только для администратора. Игроки не могут редактировать команды.");
-        }
-    }
-
-    // Выход из админ-режима
-    function logoutAdmin() {
-        sessionStorage.removeItem("admin_session_active");
-        toggleAdminMode(false);
-        renderPlayerView();  // просто обновим вид для игрока, без лишнего
-    }
-
-    // Обработчики событий после загрузки DOM
-    document.addEventListener("DOMContentLoaded", function() {
-        loadCommandsFromStorage();
-        renderPlayerView();
-        checkStoredAdminSession();  // скрывает/показывает в зависимости от сессии
-        // добавим обработчики для кнопок
-        const enterAdminBtn = document.getElementById("enterAdminBtn");
-        if (enterAdminBtn) {
-            enterAdminBtn.addEventListener("click", requestAdminAccess);
-        }
-        const addBtn = document.getElementById("addCommandBtn");
-        if (addBtn) {
-            addBtn.addEventListener("click", addNewCommand);
-        }
-        const toggleAdminBtn = document.getElementById("toggleAdminModeBtn");
-        if (toggleAdminBtn) {
-            toggleAdminBtn.addEventListener("click", function() {
-                logoutAdmin();
-            });
-        }
-        // если мы уже в админ-режиме после перезагрузки — рендер админки
-        if (isAdminMode) {
-            renderAdminListView();
-        }
-        // дополнительно, если админ панель видна, то каждый раз при изменении данных перерисовываем оба списка
-        // подпишемся на события? не нужно, все операции вызывают рендер
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFromLocal();
+        document.getElementById('enterAdminBtn').onclick = enterAdmin;
+        document.getElementById('logoutBtn').onclick = logoutAdmin;
+        document.getElementById('addBtn').onclick = addCommand;
+        document.getElementById('saveToFileBtn').onclick = downloadJSON;
     });
-
-    // Перехват попыток изменения через консоль? Не нужно, localStorage синхронизирован.
-    // При любом редактировании из админ-панели команды меняются и игрок видит только обновленный безопасный список.
-    // Редактирование также доступно через попап.
-
-    // Чтобы кнопки редактирования гарантированно работали даже после динамической подгрузки,
-    // функции window.editCommand и window.deleteCommand уже определены глобально.
-    // Добавим обновление при любом изменении.
-    window.updateAll = function() {
-        renderPlayerView();
-        if (isAdminMode) renderAdminListView();
-    }
-
-    // Также экспорт для возможных вызовов внутри (например после удаления)
-    // На всякий случай синхронизируем вызовы сохранения
-    const origSave = saveCommandsToStorage;
-    window.saveCommandsToStorage = function() {
-        origSave();
-        renderPlayerView();
-        if (isAdminMode) renderAdminListView();
-    };
 </script>
 </body>
 </html>
